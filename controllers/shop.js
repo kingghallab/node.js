@@ -1,7 +1,6 @@
 /* eslint-disable no-unused-vars */
-const product = require("../models/product");
 const Product = require("../models/product");
-// const Cart = require("../models/cart");
+const Order = require("../models/order");
 
 exports.getShowShop = (req, res, next) => {
   Product.find()
@@ -10,6 +9,7 @@ exports.getShowShop = (req, res, next) => {
         products: ProductsList,
         pageTitle: "ALL PRODUCTS",
         path: "/products",
+        isAuthenticated: req.session.isLoggedIn
       });
     })
     .catch((err) => console.log(err));
@@ -23,7 +23,8 @@ exports.getShowCart = (req, res, next) => {
       res.render("shop/cart.ejs", {
         pageTitle: "Cart",
         path: "/cart",
-        products: products
+        products: products,
+        isAuthenticated: req.session.isLoggedIn
       });
     })
     .catch((err) => console.log(err));
@@ -62,6 +63,7 @@ exports.getProductDetails = (req, res, next) => {
         product: product,
         pageTitle: product.title,
         path: "/products",
+        isAuthenticated: req.session.isLoggedIn
       });
     })
     .catch((err) => console.log(err));
@@ -74,6 +76,7 @@ exports.getIndex = (req, res, next) => {
         products: ProductsList,
         pageTitle: "Shop",
         path: "/",
+        isAuthenticated: req.session.isLoggedIn
       });
     })
     .catch((err) => console.log(err));
@@ -83,17 +86,28 @@ exports.getCheckout = (req, res, next) => {
   res.render("shop/checkout.ejs", {
     pageTitle: "Check Out",
     path: "/checkout",
+    isAuthenticated: req.session.isLoggedIn
   });
 };
 
 exports.getOrders = (req, res, next) => {
-  req.user
-    .getCart()
-    .then((cart) => {
-      return cart.getProducts();
-    })
-    .then((products) => {
-      console.log(products);
-    });
-  res.render("shop/orders.ejs", { pageTitle: "Order Page", path: "/orders" });
+  Order.find({'user.userId': req.user._id}).then(orders => {
+    res.render("shop/orders.ejs", { pageTitle: "Order Page", path: "/orders", orders: orders, isAuthenticated: req.session.isLoggedIn });
+  }).catch(err => {
+    console.log(err);
+  })
 };
+
+exports.postOrder = (req, res, next) => {
+  req.user.populate("cart.items.productId").then(user => {
+    const products = user.cart.items.map(i => {
+      return {quantity: i.quantity, product: {...i.productId._doc}};
+    });
+    console.log(products);
+    const order = new Order({products: products, user: {name: req.user.name, userId: req.user} })
+    return order.save()
+  }).then(result => {
+    req.user.clearCart();
+    res.redirect("/orders");
+  })
+}

@@ -1,12 +1,12 @@
 const mongoose = require("mongoose");
 const userSchema = new mongoose.Schema({
-  name: {
-    type: String,
-    required: true,
-  },
   email: {
     type: String,
     required: true,
+  },
+  password: {
+    type: String,
+    required: true
   },
   cart: {
     items: [
@@ -60,5 +60,9 @@ userSchema.methods.deleteOneFromCart = function (product) {
   return this.save();
 }
 
+userSchema.methods.clearCart = function() {
+  this.cart = {items: []};
+  return this.save();
+}
 
 module.exports = mongoose.model("User", userSchema);

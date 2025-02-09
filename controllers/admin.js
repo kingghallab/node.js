@@ -1,6 +1,5 @@
 const Product = require("../models/product");
 
-
 exports.getProductsAdmin = (req, res, next) => {
   Product.find()
     .then((products) => {
@@ -8,7 +7,6 @@ exports.getProductsAdmin = (req, res, next) => {
         products: products,
         pageTitle: "Admin Products",
         path: "/admin/products",
-        isAuthenticated: req.session.isLoggedIn
       });
     })
     .catch((err) => console.log(err));
@@ -20,7 +18,7 @@ exports.getAddProduct = (req, res, next) => {
     path: "/admin/add-product",
     operation: "Add Product",
     edit: false,
-    isAuthenticated: req.session.isLoggedIn
+    
   });
 };
 
@@ -36,7 +34,6 @@ exports.postAddProduct = (req, res, next) => {
     price: price,
     userId: req.user
   });
-  //this createProduct method is available via the defined relations in app.js, it's a specific method created by sequelize create`whatever table name u defined`({object that has data entries})
   product
     .save()
     .then((result) => {
@@ -65,8 +62,7 @@ exports.getEditProduct = (req, res, next) => {
         pageTitle: "Edit Product",
         path: "/admin/edit-product",
         edit: editMode,
-        product: product,
-        isAuthenticated: req.session.isLoggedIn
+        product: product
       });
     })
     .catch((err) => console.log(err));

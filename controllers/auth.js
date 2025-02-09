@@ -2,11 +2,16 @@ const User = require("../models/user");
 const bcrypt = require("bcryptjs");
 
 exports.getLogin = (req, res, next) => {
-  console.log(req.session.isLoggedIn);
+  let message = req.flash("error");
+  if (message.length > 0) {
+    message = message[0];
+  } else {
+    message = null;
+  }
   res.render("auth/login", {
     path: "/login",
     pageTitle: "Login",
-    isAuthenticated: req.session.isLoggedIn,
+    errorMessage: message,
   });
 };
 
@@ -16,6 +21,7 @@ exports.postLogin = (req, res, next) => {
   User.findOne({ email: email })
     .then((user) => {
       if (!user) {
+        req.flash("error", "Invalid Email Or Password.");
         return res.redirect("/login");
       }
       bcrypt
@@ -29,6 +35,7 @@ exports.postLogin = (req, res, next) => {
               res.redirect("/");
             });
           }
+          req.flash("error", "Invalid Email Or Password.") // Invalid Password, password doesn't match hashed pw
           res.redirect("/login");
         })
         .catch((err) => {
@@ -39,10 +46,16 @@ exports.postLogin = (req, res, next) => {
     .catch((err) => console.log(err));
 };
 exports.getSignup = (req, res, next) => {
+  let message = req.flash("error");
+  if (message.length > 0) {
+    message = message[0];
+  } else {
+    message = null;
+  }
   res.render("auth/signup", {
     path: "/signup",
     pageTitle: "Signup",
-    isAuthenticated: false,
+    errorMessage: message,
   });
 };
 
@@ -50,9 +63,14 @@ exports.postSignup = (req, res, next) => {
   const email = req.body.email;
   const password = req.body.password;
   const confirmPassword = req.body.confirmPassword;
+  if (password !== confirmPassword) {
+    req.flash("error", "Password Confirmation Failed");
+    return res.redirect("/signup");
+  }
   User.findOne({ email: email })
     .then((userDoc) => {
       if (userDoc) {
+        req.flash("error", "Email Already Exists.");
         return res.redirect("/signup");
       }
       return bcrypt

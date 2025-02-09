@@ -3,8 +3,12 @@ const express = require("express");
 const app = express();
 const path = require("path");
 const mongoose = require("mongoose");
+const csrf = require("csurf");
+const csrfProtection = csrf();
+const flash = require("connect-flash"); //For sending error messages when user does sth wrong eg: login with false credentials
 const MONGODB_URI =
   "mongodb+srv://adhamghallab0:coDP0BdUg7zGeA4z@thecluster.9n4zf.mongodb.net/shop?retryWrites=true&w=majority&appName=theCluster";
+
 
 const session = require("express-session");
 const mongodbStore = require("connect-mongodb-session")(session);
@@ -37,6 +41,9 @@ app.use(
   })
 );
 
+app.use(csrfProtection);
+app.use(flash());
+
 app.use((req, res, next) => {
   if (!req.session.user) {
     return next();
@@ -48,6 +55,16 @@ app.use((req, res, next) => {
     })
     .catch((err) => console.log(err));
 });
+
+// This is for adding isAuthenticated and csrfToken to rendering All views
+// equivalent to: isAuthenticated: req.session.isLoggedIn,
+//                csrfToken: req.csrfToken() 
+// when rendering the view
+app.use((req, res, next) => {
+  res.locals.isAuthenticated = req.session.isLoggedIn;
+  res.locals.csrfToken = req.csrfToken();
+  next();
+})
 
 //For granting access to a file that should be accessed by the html views, which is the css file
 // eslint-disable-next-line no-undef

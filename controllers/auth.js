@@ -1,6 +1,22 @@
 const User = require("../models/user");
 const bcrypt = require("bcryptjs");
 
+//Send Mail Logic... Returns a promise, you can chain .this().catch() 
+//Tested in postSignup
+
+const sgMail = require("@sendgrid/mail");
+sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+function sendEmail(email, subject) {
+  const msg = {
+    to: email,
+    from: "adham_ghallab4@hotmail.com",
+    subject: subject,
+    text: "This is a test email. If you are seeing this, your email client does not support HTML.",
+    html: "<strong>Welcome To Node.js E-Commerce Website</strong>",
+  };
+  return sgMail.send(msg);
+}
+
 exports.getLogin = (req, res, next) => {
   let message = req.flash("error");
   if (message.length > 0) {
@@ -35,7 +51,7 @@ exports.postLogin = (req, res, next) => {
               res.redirect("/");
             });
           }
-          req.flash("error", "Invalid Email Or Password.") // Invalid Password, password doesn't match hashed pw
+          req.flash("error", "Invalid Email Or Password."); // Invalid Password, password doesn't match hashed pw
           res.redirect("/login");
         })
         .catch((err) => {
@@ -85,6 +101,16 @@ exports.postSignup = (req, res, next) => {
         })
         .then((result) => {
           res.redirect("/login");
+          sendEmail(
+            email, //to email
+            "Successfully Signed Up", // sub
+          )
+          .then(() => {
+            console.log("Signup Email sent successfully");
+          })
+          .catch((error) => {
+            console.error("Error sending email:", error);
+          });
         });
     })
     .catch((err) => {

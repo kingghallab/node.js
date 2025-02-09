@@ -1,3 +1,6 @@
+//For environment variables, notice that you include that file in gitignore, to not leak your api keys or db uri
+require('dotenv').config(); 
+
 //routing framework
 const express = require("express");
 const app = express();
@@ -6,8 +9,6 @@ const mongoose = require("mongoose");
 const csrf = require("csurf");
 const csrfProtection = csrf();
 const flash = require("connect-flash"); //For sending error messages when user does sth wrong eg: login with false credentials
-const MONGODB_URI =
-  "mongodb+srv://adhamghallab0:coDP0BdUg7zGeA4z@thecluster.9n4zf.mongodb.net/shop?retryWrites=true&w=majority&appName=theCluster";
 
 
 const session = require("express-session");
@@ -21,7 +22,7 @@ const loginRoute = require("./routes/auth");
 const User = require("./models/user");
 
 const store = new mongodbStore({
-  uri: MONGODB_URI,
+  uri: process.env.MONGODB_URI,
   collection: "sessions",
 });
 
@@ -80,7 +81,7 @@ app.use(loginRoute);
 app.use(errorController.notFound404);
 
 mongoose
-  .connect(MONGODB_URI)
+  .connect(process.env.MONGODB_URI)
   // eslint-disable-next-line no-unused-vars
   .then((result) => {
     app.listen(3000);

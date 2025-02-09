@@ -30,10 +30,6 @@ To start the project in development mode with automatic reloading:
 ```sh
 npm run dev
 ```
-or
-```sh
-yarn dev
-```
 
 ### Production Mode
 To build and run the project for production:

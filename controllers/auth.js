@@ -183,7 +183,7 @@ exports.postReset = (req, res, next) => {
 
 exports.getNewPassword = (req, res, next) => {
   const token = req.params.token; //Extract Token from /reset/${token}
-  console.log(token);
+  console.log("Token used in reset:", token);
   // console.log(Date.now());
   // $gt: Date.now() means check if date of reset token expiration > the date now
   User.findOne({ resetToken: token, resetTokenExpiration: { $gt: Date.now() } })

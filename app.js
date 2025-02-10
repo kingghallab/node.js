@@ -82,7 +82,6 @@ app.use(errorController.notFound404);
 
 mongoose
   .connect(process.env.MONGODB_URI)
-  // eslint-disable-next-line no-unused-vars
   .then((result) => {
     app.listen(3000);
   })

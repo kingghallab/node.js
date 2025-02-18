@@ -1,4 +1,3 @@
-/* eslint-disable no-unused-vars */
 const Product = require("../models/product");
 const Order = require("../models/order");
 

@@ -1,6 +1,7 @@
 const User = require("../models/user");
 const bcrypt = require("bcryptjs");
 const crypto = require("crypto");
+const { validationResult } = require("express-validator");
 
 //Send Mail Logic... Returns a promise, you can chain .this().catch()
 //Tested in postSignup
@@ -29,18 +30,29 @@ exports.getLogin = (req, res, next) => {
     path: "/login",
     pageTitle: "Login",
     errorMessage: message,
+    oldInput: {
+      email: "",
+      password: ""
+    },
   });
 };
 
 exports.postLogin = (req, res, next) => {
   const email = req.body.email;
   const password = req.body.password;
-  User.findOne({ email: email })
-    .then((user) => {
-      if (!user) {
-        req.flash("error", "Invalid Email Or Password.");
-        return res.redirect("/login");
-      }
+  const validationErrors = validationResult(req);
+  if (!validationErrors.isEmpty()) {
+    return res.status(422).render("auth/login", {
+      path: "/login",
+      pageTitle: "Login",
+      errorMessage: validationErrors.array()[0].msg,
+      oldInput: {
+        email: email,
+        password: password
+      },
+    });
+  }
+  
       bcrypt
         .compare(password, user.password)
         .then((doMatch) => {
@@ -73,6 +85,12 @@ exports.getSignup = (req, res, next) => {
     path: "/signup",
     pageTitle: "Signup",
     errorMessage: message,
+    oldInput: {
+      email: "",
+      password: "",
+      confirmPassword: ""
+    },
+    validationErrors: []
   });
 };
 
@@ -80,44 +98,46 @@ exports.postSignup = (req, res, next) => {
   const email = req.body.email;
   const password = req.body.password;
   const confirmPassword = req.body.confirmPassword;
-  if (password !== confirmPassword) {
-    req.flash("error", "Password Confirmation Failed");
-    return res.redirect("/signup");
+  const validationErrors = validationResult(req);
+  if (!validationErrors.isEmpty()) {
+    console.log(validationErrors.array());
+    return res.status(422).render("auth/signup", {
+      path: "/signup",
+      pageTitle: "Signup",
+      errorMessage: validationErrors.array()[0].msg,
+      oldInput: {
+        email: email,
+        password: password,
+        confirmPassword: confirmPassword
+      },
+      validationErrors: validationErrors.array()
+    });
   }
-  User.findOne({ email: email })
-    .then((userDoc) => {
-      if (userDoc) {
-        req.flash("error", "Email Already Exists.");
-        return res.redirect("/signup");
-      }
-      return bcrypt
-        .hash(password, 12)
-        .then((hashedPassword) => {
-          const user = new User({
-            email: email,
-            password: hashedPassword,
-            cart: { items: [] },
-          });
-          return user.save();
+  bcrypt
+    .hash(password, 12)
+    .then((hashedPassword) => {
+      const user = new User({
+        email: email,
+        password: hashedPassword,
+        cart: { items: [] },
+      });
+      return user.save();
+    })
+    .then((result) => {
+      res.redirect("/login");
+      sendEmail(
+        email, //to email
+        "Successfully Signed Up", // sub
+        "<strong>Welcome To Node.js E-Commerce Website</strong>"
+      )
+        .then(() => {
+          console.log("Signup Email sent successfully");
         })
-        .then((result) => {
-          res.redirect("/login");
-          sendEmail(
-            email, //to email
-            "Successfully Signed Up", // sub
-            "<strong>Welcome To Node.js E-Commerce Website</strong>"
-          )
-            .then(() => {
-              console.log("Signup Email sent successfully");
-            })
-            .catch((error) => {
-              console.error("Error sending email:", error);
-            });
+        .catch((error) => {
+          console.error("Error sending email:", error);
         });
     })
-    .catch((err) => {
-      console.log(err);
-    });
+    .catch((err) => console.log(err));
 };
 
 exports.postLogout = (req, res, next) => {
@@ -225,7 +245,8 @@ exports.postNewPassword = (req, res, next) => {
         return res.redirect("/reset");
       }
       return bcrypt.hash(req.body.password, 12);
-    }).then(newHashedPassword => {
+    })
+    .then((newHashedPassword) => {
       updatedUser.password = newHashedPassword;
       updatedUser.resetToken = null;
       updatedUser.resetTokenExpiration = undefined;

@@ -1,4 +1,5 @@
 const Product = require("../models/product");
+const { validationResult } = require("express-validator");
 
 exports.getProductsAdmin = (req, res, next) => {
   Product.find({ userId: req.user._id })
@@ -9,7 +10,11 @@ exports.getProductsAdmin = (req, res, next) => {
         path: "/admin/products",
       });
     })
-    .catch((err) => console.log(err));
+    .catch((err) => {
+      const error = new Error(err);
+      error.httpStatusCode = 500;
+      return next(error);
+    });
 };
 
 exports.getAddProduct = (req, res, next) => {
@@ -18,6 +23,15 @@ exports.getAddProduct = (req, res, next) => {
     path: "/admin/add-product",
     operation: "Add Product",
     edit: false,
+    oldInput: {
+      title: "",
+      imageUrl: "",
+      description: "",
+      price: "",
+    },
+    errorMessage: null,
+    hasError: false,
+    validationErrors: [],
   });
 };
 
@@ -26,6 +40,25 @@ exports.postAddProduct = (req, res, next) => {
   const imageUrl = req.body.imageUrl;
   const description = req.body.description;
   const price = req.body.price;
+  const validationErrors = validationResult(req);
+  if (!validationErrors.isEmpty()) {
+    return res.status(422).render("admin/edit-product.ejs", {
+      pageTitle: "Product Addition",
+      path: "/admin/add-product",
+      operation: "Add Product",
+      edit: false,
+      errorMessage: validationErrors.array()[0].msg,
+      product: {
+        title: title,
+        imageUrl: imageUrl,
+        description: description,
+        price: price,
+      },
+      hasError: true,
+      validationErrors: validationErrors.array(),
+    });
+  }
+
   const product = new Product({
     title: title,
     imageUrl: imageUrl,
@@ -39,7 +72,11 @@ exports.postAddProduct = (req, res, next) => {
       console.log("Created A Product Successfully!");
       res.redirect("/admin/products");
     })
-    .catch((err) => console.log(err));
+    .catch((err) => {
+      const error = new Error(err);
+      error.httpStatusCode = 500;
+      return next(error);
+    });
 };
 
 exports.getEditProduct = (req, res, next) => {
@@ -62,12 +99,37 @@ exports.getEditProduct = (req, res, next) => {
         path: "/admin/edit-product",
         edit: editMode,
         product: product,
+        errorMessage: null,
+        hasError: false,
+        validationErrors: [],
       });
     })
-    .catch((err) => console.log(err));
+    .catch((err) => {
+      const error = new Error(err);
+      error.httpStatusCode = 500;
+      return next(error);
+    });
 };
 
 exports.postEditProduct = (req, res, next) => {
+  const validationErrors = validationResult(req);
+  if (!validationErrors.isEmpty()) {
+    return res.status(422).render("admin/edit-product.ejs", {
+      pageTitle: "Product Addition",
+      path: "/admin/add-product",
+      operation: "Add Product",
+      edit: false,
+      errorMessage: validationErrors.array()[0].msg,
+      product: {
+        title: req.body.title,
+        imageUrl: req.body.imageUrl,
+        description: req.body.description,
+        price: req.body.price,
+      },
+      hasError: true,
+      validationErrors: validationErrors.array(),
+    });
+  }
   Product.findById(req.body.productId)
     .then((product) => {
       if (product.userId.toString() !== req.user._id.toString()) {
@@ -82,15 +144,23 @@ exports.postEditProduct = (req, res, next) => {
         res.redirect("/");
       });
     })
-    .catch((err) => console.log(err));
+    .catch((err) => {
+      const error = new Error(err);
+      error.httpStatusCode = 500;
+      return next(error);
+    });
 };
 
 exports.deleteProduct = (req, res, next) => {
-  const productId = req.params.productId;
-  Product.deleteOne({_id: productId, userId: req.user._id})
+  const productId = req.body.productId;
+  Product.deleteOne({ _id: productId, userId: req.user._id })
     .then((result) => {
       console.log(`Destroyed Product With Id: ${productId}`);
       res.redirect("/admin/products");
     })
-    .catch((err) => console.log(err));
+    .catch((err) => {
+      const error = new Error(err);
+      error.httpStatusCode = 500;
+      return next(error);
+    });
 };

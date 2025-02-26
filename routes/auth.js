@@ -1,3 +1,7 @@
+// to implement what you've done in post signup for user experience
+// you have to validate email and password using check again, and then take the code in controller and put it there as a .custom method, also don't forget to
+// add changes in the view to render them correctly like, old input and red border class for invalid input
+
 const express = require("express");
 const router = express.Router();
 const authController = require("../controllers/auth");
@@ -6,29 +10,7 @@ const User = require("../models/user");
 const bcrypt = require("bcryptjs");
 
 router.get("/login", authController.getLogin);
-router.post("/login", [check("email").custom((value, {req}) => {
-    return User.findOne({ email: value })
-        .then((user) => {
-          if (!user) {
-            return Promise.reject("Invalid Email or Password!");
-          }
-          return true;
-        }), check("password").custom((value, {req}) => { 
-            
-            bcrypt
-                .compare(value, user.password)
-                .then((doMatch) => {
-                  if (doMatch) {
-                    req.session.isLoggedIn = true;
-                    req.session.user = user;
-                    return req.session.save((err) => {
-                      console.log(err);
-                      res.redirect("/");
-                    });
-                  }
-                  req.flash("error", "Invalid Email Or Password."); // Invalid Password, password doesn't match hashed pw
-                  res.redirect("/login");
-                })})], authController.postLogin);
+router.post("/login", authController.postLogin);
 router.get("/signup", authController.getSignup);
 router.post(
   "/signup",
@@ -37,9 +19,11 @@ router.post(
     check("email")
       .isEmail()
       .withMessage("Please Enter A Valid Email!")
+      .normalizeEmail()
       .custom((value, { req }) => {
         return User.findOne({ email: value }).then((userDoc) => {
           if (userDoc) {
+            // Notice here that this is asynchronous, so we return a promise
             return Promise.reject(
               "Email Already Exists, Please Pick A Different One!"
             );
@@ -53,12 +37,17 @@ router.post(
       .isAlphanumeric()
       .withMessage(
         "Please Re-enter the password, only alphanumeric characters are allowed"
-      ).custom((value, { req }) => { 
+      )
+      .trim()
+      .custom((value, { req }) => {
+        // Notice here that this is synchronous, so we don't need to return a promise
         if (value !== req.body.confirmPassword) {
           throw new Error("Passwords Do Not Match!");
         }
-        return true;
+        return (req.session.user = user);
       }), // Check if password matches confirmPassword
+      check("confirmPassword")
+      .trim()
   ],
   authController.postSignup
 );

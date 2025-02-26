@@ -78,6 +78,21 @@ app.use("/admin", adminRoutes);
 app.use(shopRoutes);
 app.use(loginRoute);
 
+
+
+//500 error handling, this gets invoked when an error is thrown in the app like this in a catch block
+// Note that this skips all the middleware and goes directly to the error handling middleware which is the last one
+// this gets triggered when you throw new Error(err) in the code, express then collects all errors and sends it to this middleware
+// Thats the block you want added in catch
+// const error = new Error(err);
+// error.httpStatusCode = 500;
+// return next(error);-
+app.get("/500", errorController.get500);
+app.use((err, req, res, next) => {
+  res.redirect("/500");
+  console.log(err);
+});
+
 app.use(errorController.notFound404);
 
 mongoose

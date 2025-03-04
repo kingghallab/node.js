@@ -170,7 +170,7 @@ form {
 }
 
 .card {
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.26);
+  box-shadow: 0 2px 8px rgba(3, 253, 111, 0.288);
 }
 
 .card__header,
@@ -187,10 +187,13 @@ form {
 
 .card__image {
   width: 100%;
+  height: 15rem;
+  text-align: center;
 }
 
 .card__image img {
-  width: 100%;
+  max-width: 100%;
+  max-height: 100%;
 }
 
 .card__actions {
@@ -246,6 +249,29 @@ form {
   border-color: red;
   background: rgb(255, 176, 176);
   color: red;
+}
+
+.pagination {
+  margin-top: 2rem;
+  text-align: center;
+}
+
+.pagination a {
+  text-decoration: none;
+  color: #00695c;
+  padding: 0.3rem;
+  border: 1px solid #00695c;
+  margin: 0 1rem;
+}
+
+.pagination a:hover,
+.pagination a:active {
+  background: #00695c;
+  color: white;
+}
+.pagination a.active {
+  background: #00695c;
+  color: white;
 }
 
 @media (min-width: 768px) {

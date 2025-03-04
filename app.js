@@ -1,5 +1,5 @@
 //For environment variables, notice that you include that file in gitignore, to not leak your api keys or db uri
-require('dotenv').config(); 
+require("dotenv").config();
 
 //routing framework
 const express = require("express");
@@ -9,7 +9,6 @@ const mongoose = require("mongoose");
 const csrf = require("csurf");
 const csrfProtection = csrf();
 const flash = require("connect-flash"); //For sending error messages when user does sth wrong eg: login with false credentials
-
 
 const session = require("express-session");
 const mongodbStore = require("connect-mongodb-session")(session);
@@ -29,7 +28,32 @@ const store = new mongodbStore({
 app.set("view engine", "ejs");
 app.set("views", "views");
 
+const multer = require("multer"); //For parsing incoming files
+const fileStorage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, "images");
+  },
+  filename: (req, file, cb) => {
+    const timestamp = new Date().toISOString().replace(/:/g, "-"); // Replace colons with dashes
+    cb(null, `${timestamp}-${file.originalname}`);
+  },
+});
+
+const fileFilter = (req, file, cb) => {
+  if (
+    file.mimetype === "image/png" ||
+    file.mimetype === "image/jpg" ||
+    file.mimetype === "image/jpeg"
+  ) {
+    cb(null, true);
+  } else {
+    cb(null, false);
+  }
+};
 //Required for parsing incoming data
+app.use(
+  multer({ storage: fileStorage, fileFilter: fileFilter }).single("image")
+);
 const bodyParser = require("body-parser");
 app.use(bodyParser.urlencoded({ extended: false }));
 
@@ -59,17 +83,19 @@ app.use((req, res, next) => {
 
 // This is for adding isAuthenticated and csrfToken to rendering All views
 // equivalent to: isAuthenticated: req.session.isLoggedIn,
-//                csrfToken: req.csrfToken() 
+//                csrfToken: req.csrfToken()
 // when rendering the view
 app.use((req, res, next) => {
   res.locals.isAuthenticated = req.session.isLoggedIn;
   res.locals.csrfToken = req.csrfToken();
   next();
-})
+});
 
 //For granting access to a file that should be accessed by the html views, which is the css file
-// eslint-disable-next-line no-undef
+// This is called static file serving
 app.use(express.static(path.join(__dirname, "public")));
+app.use("/images", express.static(path.join(__dirname, "images")));
+
 //note that when specifying a directory after this access grant, you are typically already inside the public file
 
 // /admin is then added in the admin.js routes
@@ -78,10 +104,8 @@ app.use("/admin", adminRoutes);
 app.use(shopRoutes);
 app.use(loginRoute);
 
-
-
 //500 error handling, this gets invoked when an error is thrown in the app like this in a catch block
-// Note that this skips all the middleware and goes directly to the error handling middleware which is the last one
+// Note that this skips all the middleware a nd goes directly to the error handling middleware which is the last one
 // this gets triggered when you throw new Error(err) in the code, express then collects all errors and sends it to this middleware
 // Thats the block you want added in catch
 // const error = new Error(err);
@@ -98,7 +122,9 @@ app.use(errorController.notFound404);
 mongoose
   .connect(process.env.MONGODB_URI)
   .then((result) => {
-    app.listen(3000);
+    app.listen(3000, '0.0.0.0', () => {
+      console.log('Server is running on port 3000');
+    });
   })
   .catch((err) => {
     console.log(err);

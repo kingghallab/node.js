@@ -1,3 +1,7 @@
+//js code that doesn't run in the server but in the browser (client-side)
+
+
+//adds functionality to the mobile navigation menu
 const backdrop = document.querySelector('.backdrop');
 const sideDrawer = document.querySelector('.mobile-nav');
 const menuToggle = document.querySelector('#side-menu-toggle');

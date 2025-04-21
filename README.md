@@ -80,9 +80,14 @@ Launch each app in its own terminal:
 
 ```bash
 # In Blog-App-Using-REST-APIs
-open 2 terminal instances
-one for frontend the server (React) and one for the Backend server (Node)
-npm start in each of their folders
+# open 2 terminal instances
+# one for frontend the server (React) and one for the Backend server (Node)
+# terminal instance 1
+cd node 
+npm start
+# terminal instance 2
+cd react
+npm start
 ```
 
 ```bash

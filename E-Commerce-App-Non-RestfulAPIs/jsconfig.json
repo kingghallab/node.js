@@ -1,8 +1,0 @@
-{
-  "compilerOptions": {
-    "allowJs": true,
-    "checkJs": false,
-    "moduleResolution": "node"
-  },
-  "include": ["./**/*"]  // This includes all JavaScript files in the root and subdirectories
-}

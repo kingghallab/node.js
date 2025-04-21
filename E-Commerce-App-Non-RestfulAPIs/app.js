@@ -122,7 +122,7 @@ app.use(errorController.notFound404);
 mongoose
   .connect(process.env.MONGODB_URI)
   .then((result) => {
-    app.listen(3000, '0.0.0.0', () => {
+    app.listen(process.env.PORT || 3000, '0.0.0.0', () => {
       console.log('Server is running on port 3000');
     });
   })
